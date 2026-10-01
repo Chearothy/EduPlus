@@ -1,0 +1,1317 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduPulse - Interactive Online Learning Dashboard</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f5ff',
+                            100: '#e0ebff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome & Google Fonts -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(156, 163, 175, 0.4); border-radius: 9999px; }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(229, 231, 235, 0.8);
+        }
+        .dark .glass-card {
+            background: rgba(30, 41, 59, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(51, 65, 85, 0.8);
+        }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-full transition-colors duration-300 flex flex-col">
+
+    <!-- HEADER / NAVIGATION -->
+    <header class="sticky top-0 z-30 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16 gap-4">
+                
+                <!-- Brand Logo & Mobile Toggle -->
+                <div class="flex items-center gap-3">
+                    <button id="mobileMenuBtn" class="md:hidden p-2 text-slate-600 dark:text-slate-300 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">
+                        <i class="fa-solid fa-bars text-xl"></i>
+                    </button>
+                    <div class="flex items-center gap-2.5 cursor-pointer" onclick="switchTab('dashboard')">
+                        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-indigo-400 flex items-center justify-center text-white shadow-md shadow-indigo-500/20">
+                            <i class="fa-solid fa-graduation-cap text-xl"></i>
+                        </div>
+                        <span class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600 dark:from-indigo-400 dark:to-violet-400">EduPulse</span>
+                    </div>
+                </div>
+
+                <!-- Global Search -->
+                <div class="hidden md:flex items-center flex-1 max-w-md mx-4">
+                    <div class="relative w-full">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                        <input type="text" id="searchInput" oninput="handleSearch(this.value)" placeholder="Search courses, skills, instructors..." 
+                            class="w-full pl-10 pr-4 py-2 text-sm bg-slate-100 dark:bg-slate-800 border border-transparent rounded-xl focus:outline-none focus:border-indigo-500 focus:bg-white dark:focus:bg-slate-900 transition-all">
+                    </div>
+                </div>
+
+                <!-- User Controls, Streak, Dark Mode -->
+                <div class="flex items-center gap-3">
+                    <!-- Upload Video Lesson Button -->
+                    <button onclick="openUploadModal()" class="px-3.5 py-2 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-semibold text-xs rounded-xl shadow-md shadow-indigo-500/20 transition flex items-center gap-1.5 active:scale-95">
+                        <i class="fa-solid fa-cloud-arrow-up text-sm"></i>
+                        <span class="hidden sm:inline">Upload Video</span>
+                    </button>
+
+                    <!-- Streak Counter -->
+                    <div class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800 text-xs font-semibold" title="Daily Streak Active!">
+                        <i class="fa-solid fa-fire text-amber-500 text-sm animate-pulse"></i>
+                        <span id="streakCount">5</span> Day Streak
+                    </div>
+
+                    <!-- Dark Mode Toggle -->
+                    <button id="themeToggleBtn" onclick="toggleTheme()" class="p-2.5 text-slate-600 dark:text-slate-300 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+                        <i id="themeIcon" class="fa-solid fa-moon"></i>
+                    </button>
+
+                    <!-- Notifications Dropdown Trigger -->
+                    <div class="relative">
+                        <button onclick="toggleNotifications()" class="p-2.5 text-slate-600 dark:text-slate-300 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition relative">
+                            <i class="fa-solid fa-bell"></i>
+                            <span class="absolute top-2 right-2 w-2 h-2 rounded-full bg-indigo-600"></span>
+                        </button>
+                        <!-- Popup Panel -->
+                        <div id="notificationsPanel" class="hidden absolute right-0 mt-2 w-80 bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 py-3 z-50">
+                            <div class="px-4 pb-2 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center">
+                                <h4 class="font-semibold text-sm">Notifications</h4>
+                                <span class="text-xs text-indigo-600 dark:text-indigo-400 cursor-pointer">Mark all read</span>
+                            </div>
+                            <div class="divide-y divide-slate-100 dark:divide-slate-700 max-h-64 overflow-y-auto custom-scrollbar">
+                                <div class="p-3 hover:bg-slate-50 dark:hover:bg-slate-700/50 text-xs flex gap-3">
+                                    <i class="fa-solid fa-award text-amber-500 text-base mt-0.5"></i>
+                                    <div>
+                                        <p class="font-medium text-slate-800 dark:text-slate-200">Achievement Unlocked!</p>
+                                        <p class="text-slate-500 dark:text-slate-400">Completed JavaScript Async Module.</p>
+                                    </div>
+                                </div>
+                                <div class="p-3 hover:bg-slate-50 dark:hover:bg-slate-700/50 text-xs flex gap-3">
+                                    <i class="fa-solid fa-clock text-indigo-500 text-base mt-0.5"></i>
+                                    <div>
+                                        <p class="font-medium text-slate-800 dark:text-slate-200">Study Reminder</p>
+                                        <p class="text-slate-500 dark:text-slate-400">15 mins left to reach today's goal!</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- User Profile Avatar -->
+                    <div class="flex items-center gap-2 pl-2 border-l border-slate-200 dark:border-slate-700">
+                        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150" alt="Alex Morgan" class="w-9 h-9 rounded-full object-cover ring-2 ring-indigo-500/30">
+                        <div class="hidden lg:block text-left">
+                            <p class="text-xs font-semibold leading-tight">Alex Morgan</p>
+                            <p class="text-[10px] text-indigo-600 dark:text-indigo-400 font-medium">PRO Scholar</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- SECONDARY NAVBAR / NAVIGATION TABS -->
+    <nav class="bg-white dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 sticky top-16 z-20 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between overflow-x-auto custom-scrollbar py-2 gap-4">
+                <div class="flex items-center gap-1.5 sm:gap-2 text-sm font-medium whitespace-nowrap" id="viewTabs">
+                    <button onclick="switchTab('dashboard')" id="tab-dashboard" class="nav-tab px-4 py-2 rounded-xl text-indigo-600 bg-indigo-50 dark:bg-indigo-950/60 dark:text-indigo-400 font-semibold transition">
+                        <i class="fa-solid fa-chart-pie mr-1.5"></i> Dashboard
+                    </button>
+                    <button onclick="switchTab('catalog')" id="tab-catalog" class="nav-tab px-4 py-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50 transition">
+                        <i class="fa-solid fa-compass mr-1.5"></i> Course Catalog
+                    </button>
+                    <button onclick="switchTab('bookmarks')" id="tab-bookmarks" class="nav-tab px-4 py-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50 transition">
+                        <i class="fa-solid fa-bookmark mr-1.5"></i> Saved Courses (<span id="savedCount">0</span>)
+                    </button>
+                    <button onclick="switchTab('planner')" id="tab-planner" class="nav-tab px-4 py-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50 transition">
+                        <i class="fa-solid fa-calendar-check mr-1.5"></i> Study Planner
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- MAIN CONTAINER -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+
+        <!-- VIEW 1: DASHBOARD OVERVIEW -->
+        <section id="view-dashboard" class="space-y-8">
+            
+            <!-- Welcome Header + Daily Goal Summary -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                <!-- Main Welcome & Active Resume Card -->
+                <div class="lg:col-span-2 bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-800 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden flex flex-col justify-between">
+                    <div class="absolute -right-10 -top-10 w-60 h-60 rounded-full bg-white/10 blur-2xl pointer-events-none"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-2 text-indigo-200 text-xs font-semibold uppercase tracking-wider mb-2">
+                            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Continue Where You Left Off
+                        </div>
+                        <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight mb-2">Full-Stack Modern React & Next.js</h2>
+                        <p class="text-indigo-100 text-sm max-w-xl mb-6">Current Lesson: <span class="font-semibold text-white">Module 3: Server Components & Actions Architecture</span></p>
+                    </div>
+
+                    <div class="relative z-10 bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/15">
+                        <div class="flex justify-between items-center text-xs font-semibold mb-2">
+                            <span>Course Completion</span>
+                            <span id="activeCourseProgressPct">68%</span>
+                        </div>
+                        <div class="w-full bg-black/20 rounded-full h-2.5 mb-4 overflow-hidden">
+                            <div class="bg-gradient-to-r from-emerald-400 to-teal-300 h-2.5 rounded-full transition-all duration-500" style="width: 68%;"></div>
+                        </div>
+                        <div class="flex flex-wrap items-center justify-between gap-3">
+                            <div class="flex items-center gap-4 text-xs text-indigo-100">
+                                <span><i class="fa-regular fa-clock mr-1"></i> 14/22 Lessons</span>
+                                <span><i class="fa-solid fa-trophy mr-1 text-amber-300"></i> Certificate Available</span>
+                            </div>
+                            <button onclick="launchLessonPlayer(1, 'lesson-3')" class="px-5 py-2.5 bg-white text-indigo-700 rounded-xl font-bold text-sm hover:bg-indigo-50 shadow-md transition-transform active:scale-95 flex items-center gap-2">
+                                <i class="fa-solid fa-play text-xs"></i> Resume Lesson
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Interactive Daily Goal Tracker Widget -->
+                <div class="glass-card rounded-3xl p-6 flex flex-col justify-between shadow-sm relative">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                            <i class="fa-solid fa-bullseye text-indigo-500"></i> Daily Study Goal
+                        </h3>
+                        <button onclick="switchTab('planner')" class="text-xs text-indigo-600 dark:text-indigo-400 font-semibold hover:underline">Adjust</button>
+                    </div>
+
+                    <div class="flex flex-col items-center my-2">
+                        <!-- Circular Progress Ring -->
+                        <div class="relative w-36 h-36 flex items-center justify-center">
+                            <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                                <path class="text-slate-200 dark:text-slate-700" stroke-width="3.5" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                <path id="goalProgressCircle" class="text-indigo-600 dark:text-indigo-400 transition-all duration-700" stroke-dasharray="75, 100" stroke-width="3.5" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                            </svg>
+                            <div class="absolute text-center">
+                                <span id="goalMinutesDisplay" class="text-2xl font-extrabold block">45</span>
+                                <span class="text-[10px] text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wide">of <span id="targetMinutesDisplay">60</span> Mins Today</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between text-xs pt-3 border-t border-slate-100 dark:border-slate-800">
+                        <span class="text-slate-500 dark:text-slate-400">Target: 60 mins/day</span>
+                        <button onclick="addStudyMinutes(15)" class="px-3 py-1.5 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 rounded-lg font-semibold hover:bg-indigo-100 dark:hover:bg-indigo-900 transition text-xs">
+                            +15 Mins
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Widgets Row -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="glass-card rounded-2xl p-4 flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xl font-bold">
+                        <i class="fa-solid fa-book-open"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Enrolled Courses</p>
+                        <p class="text-xl font-extrabold" id="statEnrolled">4</p>
+                    </div>
+                </div>
+                <div class="glass-card rounded-2xl p-4 flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-purple-100 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center text-xl font-bold">
+                        <i class="fa-solid fa-hourglass-half"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Hours Learned</p>
+                        <p class="text-xl font-extrabold">38.5 hrs</p>
+                    </div>
+                </div>
+                <div class="glass-card rounded-2xl p-4 flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xl font-bold">
+                        <i class="fa-solid fa-certificate"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Certificates Earned</p>
+                        <p class="text-xl font-extrabold">2</p>
+                    </div>
+                </div>
+                <div class="glass-card rounded-2xl p-4 flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center text-xl font-bold">
+                        <i class="fa-solid fa-fire"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Active Streak</p>
+                        <p class="text-xl font-extrabold">5 Days</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- In Progress Courses Quick Access -->
+            <div>
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-bold">In-Progress Courses</h3>
+                    <button onclick="switchTab('catalog')" class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">Explore All Courses <i class="fa-solid fa-arrow-right ml-1"></i></button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="inProgressCoursesContainer">
+                    <!-- Populated via JS -->
+                </div>
+            </div>
+
+        </section>
+
+        <!-- VIEW 2: COURSE CATALOG & DISCOVERY GRID -->
+        <section id="view-catalog" class="hidden space-y-6">
+            
+            <!-- Category Tabs & Search/Filter Header -->
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700">
+                <!-- Category Filters -->
+                <div class="flex items-center gap-2 overflow-x-auto custom-scrollbar pb-2 md:pb-0 text-xs font-medium" id="categoryFilterContainer">
+                    <button onclick="filterCategory('All')" class="cat-filter-btn px-3.5 py-2 rounded-xl bg-indigo-600 text-white font-semibold shadow-sm transition">All Topics</button>
+                    <button onclick="filterCategory('Web Development')" class="cat-filter-btn px-3.5 py-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition">Web Development</button>
+                    <button onclick="filterCategory('Data Science')" class="cat-filter-btn px-3.5 py-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition">Data Science</button>
+                    <button onclick="filterCategory('UI/UX Design')" class="cat-filter-btn px-3.5 py-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition">UI/UX Design</button>
+                    <button onclick="filterCategory('AI & Machine Learning')" class="cat-filter-btn px-3.5 py-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition">AI & ML</button>
+                    <button onclick="filterCategory('User Uploads')" class="cat-filter-btn px-3.5 py-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition">User Uploads</button>
+                </div>
+
+                <!-- Secondary Filters & Quick Upload -->
+                <div class="flex items-center gap-3 text-xs">
+                    <select id="levelFilter" onchange="applyFilters()" class="bg-slate-100 dark:bg-slate-700 border-none rounded-xl px-3 py-2 text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500">
+                        <option value="All">All Levels</option>
+                        <option value="Beginner">Beginner</option>
+                        <option value="Intermediate">Intermediate</option>
+                        <option value="Advanced">Advanced</option>
+                    </select>
+
+                    <select id="sortByFilter" onchange="applyFilters()" class="bg-slate-100 dark:bg-slate-700 border-none rounded-xl px-3 py-2 text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500">
+                        <option value="popular">Most Popular</option>
+                        <option value="rating">Highest Rated</option>
+                        <option value="newest">Newest</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Course Grid Container -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="catalogGrid">
+                <!-- Populated via JS -->
+            </div>
+        </section>
+
+        <!-- VIEW 3: SAVED / BOOKMARKED COURSES -->
+        <section id="view-bookmarks" class="hidden space-y-6">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h2 class="text-xl font-bold">Saved Courses</h2>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">Courses you saved for later learning sessions.</p>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="bookmarksGrid">
+                <!-- Populated dynamically -->
+            </div>
+        </section>
+
+        <!-- VIEW 4: PERSONAL STUDY PLANNER -->
+        <section id="view-planner" class="hidden space-y-6">
+            <div class="glass-card rounded-3xl p-6 sm:p-8 space-y-6">
+                <div>
+                    <h2 class="text-xl font-bold mb-1">Interactive Study Planner & Goals</h2>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">Set daily habit targets and organize your weekly learning routine.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Target Minutes Configuration Card -->
+                    <div class="bg-slate-50 dark:bg-slate-800/60 rounded-2xl p-5 border border-slate-200 dark:border-slate-700 space-y-4">
+                        <h3 class="text-sm font-bold text-indigo-600 dark:text-indigo-400">Daily Study Target</h3>
+                        <div>
+                            <div class="flex justify-between text-sm font-semibold mb-2">
+                                <span>Target Daily Time:</span>
+                                <span id="targetMinutesLabel">60 Minutes</span>
+                            </div>
+                            <input type="range" id="goalRangeInput" min="15" max="180" step="15" value="60" oninput="updateGoalTarget(this.value)" class="w-full accent-indigo-600">
+                            <div class="flex justify-between text-[10px] text-slate-400 mt-1">
+                                <span>15m</span>
+                                <span>60m</span>
+                                <span>120m</span>
+                                <span>180m</span>
+                            </div>
+                        </div>
+
+                        <div class="pt-2">
+                            <p class="text-xs text-slate-600 dark:text-slate-300">Today's Progress: <span class="font-bold text-indigo-600 dark:text-indigo-400" id="plannerTodayProgress">45 / 60 Mins</span></p>
+                            <div class="flex gap-2 mt-3">
+                                <button onclick="addStudyMinutes(15)" class="flex-1 py-2 bg-indigo-600 text-white rounded-xl text-xs font-semibold hover:bg-indigo-700 transition">+15 Min</button>
+                                <button onclick="resetTodayGoal()" class="px-3 py-2 bg-slate-200 dark:bg-slate-700 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-300 transition">Reset</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Weekly Study Streak / Tracker -->
+                    <div class="md:col-span-2 bg-slate-50 dark:bg-slate-800/60 rounded-2xl p-5 border border-slate-200 dark:border-slate-700 flex flex-col justify-between">
+                        <div>
+                            <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100 mb-4">Weekly Goal Progress</h3>
+                            <div class="grid grid-cols-7 gap-2 text-center">
+                                <div class="space-y-2">
+                                    <span class="text-xs text-slate-400 block font-medium">Mon</span>
+                                    <div class="w-full h-16 bg-indigo-600 rounded-xl flex items-end justify-center pb-2 text-white text-xs font-bold shadow-sm">60m</div>
+                                </div>
+                                <div class="space-y-2">
+                                    <span class="text-xs text-slate-400 block font-medium">Tue</span>
+                                    <div class="w-full h-16 bg-indigo-600 rounded-xl flex items-end justify-center pb-2 text-white text-xs font-bold shadow-sm">45m</div>
+                                </div>
+                                <div class="space-y-2">
+                                    <span class="text-xs text-slate-400 block font-medium">Wed</span>
+                                    <div class="w-full h-16 bg-indigo-600 rounded-xl flex items-end justify-center pb-2 text-white text-xs font-bold shadow-sm">75m</div>
+                                </div>
+                                <div class="space-y-2">
+                                    <span class="text-xs text-slate-400 block font-medium">Thu</span>
+                                    <div class="w-full h-16 bg-indigo-500 rounded-xl flex items-end justify-center pb-2 text-white text-xs font-bold shadow-sm">50m</div>
+                                </div>
+                                <div class="space-y-2">
+                                    <span class="text-xs text-slate-400 block font-medium">Fri (Today)</span>
+                                    <div id="fridayBar" class="w-full h-16 bg-indigo-600 rounded-xl flex items-end justify-center pb-2 text-white text-xs font-bold shadow-md ring-2 ring-indigo-400">45m</div>
+                                </div>
+                                <div class="space-y-2">
+                                    <span class="text-xs text-slate-400 block font-medium">Sat</span>
+                                    <div class="w-full h-16 bg-slate-200 dark:bg-slate-700 rounded-xl flex items-end justify-center pb-2 text-slate-400 text-xs font-medium">0m</div>
+                                </div>
+                                <div class="space-y-2">
+                                    <span class="text-xs text-slate-400 block font-medium">Sun</span>
+                                    <div class="w-full h-16 bg-slate-200 dark:bg-slate-700 rounded-xl flex items-end justify-center pb-2 text-slate-400 text-xs font-medium">0m</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-xs text-slate-500 dark:text-slate-400 mt-4 flex justify-between items-center">
+                            <span>🔥 5 days streak! Keep going to earn the 7-Day Badge.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- VIEW 5: FULL INTERACTIVE LESSON / VIDEO PLAYER MODAL & WORKSPACE -->
+    <div id="lessonPlayerModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md hidden flex flex-col justify-between overflow-hidden">
+        
+        <!-- Top Bar Header -->
+        <div class="bg-slate-900 border-b border-slate-800 px-4 py-3 flex items-center justify-between text-white">
+            <div class="flex items-center gap-3">
+                <button onclick="closeLessonPlayer()" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
+                    <i class="fa-solid fa-arrow-left"></i>
+                </button>
+                <div>
+                    <h3 id="playerCourseTitle" class="font-bold text-sm text-white">Course Title Placeholder</h3>
+                    <p id="playerLessonTitle" class="text-xs text-indigo-400">Lesson Title Placeholder</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <span id="playerBadge" class="text-xs bg-indigo-950 text-indigo-300 px-3 py-1 rounded-full border border-indigo-800"><i class="fa-solid fa-circle text-[8px] text-emerald-400 mr-1.5"></i> Live Interactive Mode</span>
+            </div>
+        </div>
+
+        <!-- Main Video & Sidebar Grid -->
+        <div class="flex-1 grid grid-cols-1 lg:grid-cols-3 overflow-hidden">
+            
+            <!-- Left 2 Columns: Video Player & Lesson Sub-tabs -->
+            <div class="lg:col-span-2 flex flex-col h-full bg-black overflow-y-auto custom-scrollbar">
+                
+                <!-- Dynamic HTML5 Video Player Container -->
+                <div class="relative w-full aspect-video bg-slate-950 flex flex-col items-center justify-center group overflow-hidden border-b border-slate-800">
+                    <video id="mainVideoPlayer" class="w-full h-full object-contain" controls poster="https://images.unsplash.com/photo-1633356122544-f134324a6cee?auto=format&fit=crop&q=80&w=800">
+                        <source id="videoSource" src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                </div>
+
+                <!-- Tabs Below Video Screen -->
+                <div class="bg-slate-900 border-b border-slate-800 flex items-center px-4 gap-4 text-xs font-semibold text-slate-400">
+                    <button onclick="switchLessonSubTab('quiz')" id="subtab-quiz" class="subtab-btn py-3 text-indigo-400 border-b-2 border-indigo-500">
+                        <i class="fa-solid fa-list-check mr-1.5"></i> Interactive Quiz
+                    </button>
+                    <button onclick="switchLessonSubTab('notes')" id="subtab-notes" class="subtab-btn py-3 hover:text-white">
+                        <i class="fa-solid fa-pen-to-square mr-1.5"></i> Lesson Notepad
+                    </button>
+                    <button onclick="switchLessonSubTab('resources')" id="subtab-resources" class="subtab-btn py-3 hover:text-white">
+                        <i class="fa-solid fa-folder-open mr-1.5"></i> Resources & Downloads
+                    </button>
+                    <button onclick="switchLessonSubTab('discussion')" id="subtab-discussion" class="subtab-btn py-3 hover:text-white">
+                        <i class="fa-solid fa-comments mr-1.5"></i> Discussion (4)
+                    </button>
+                </div>
+
+                <!-- Lesson Tab Content Area -->
+                <div class="p-6 bg-slate-900 text-slate-200 flex-1">
+                    
+                    <!-- SUB-TAB 1: INTERACTIVE QUIZ ENGINE -->
+                    <div id="subtab-content-quiz" class="space-y-6 max-w-2xl">
+                        <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                            <div>
+                                <h4 class="font-bold text-white text-base">Concept Check Quiz</h4>
+                                <p class="text-xs text-slate-400">Test your understanding of React Server Components before proceeding.</p>
+                            </div>
+                            <span class="text-xs font-mono bg-indigo-950 text-indigo-300 border border-indigo-800 px-2.5 py-1 rounded-lg">Score: <span id="quizScoreText">0/2</span></span>
+                        </div>
+
+                        <!-- Quiz Question Container -->
+                        <div id="quizContainer" class="space-y-4">
+                            <!-- Populated dynamically by JS -->
+                        </div>
+                    </div>
+
+                    <!-- SUB-TAB 2: PERSISTENT NOTEPAD (LOCAL STORAGE) -->
+                    <div id="subtab-content-notes" class="hidden space-y-4 max-w-2xl">
+                        <div class="flex justify-between items-center">
+                            <h4 class="font-bold text-white text-sm">Personal Lesson Notes</h4>
+                            <span id="notesSavedIndicator" class="text-[11px] text-emerald-400 opacity-0 transition-opacity"><i class="fa-solid fa-check mr-1"></i> Saved to browser storage</span>
+                        </div>
+                        <textarea id="lessonNotepad" oninput="saveNotes()" placeholder="Type your personal key takeaways or code snippets here... Auto-saved!"
+                            class="w-full h-48 bg-slate-950 border border-slate-800 rounded-xl p-4 text-xs font-mono text-slate-200 focus:outline-none focus:border-indigo-500 transition"></textarea>
+                        <p class="text-[11px] text-slate-400">Notes are saved automatically in your browser's local storage for easy reference anytime.</p>
+                    </div>
+
+                    <!-- SUB-TAB 3: RESOURCES & DOWNLOADS -->
+                    <div id="subtab-content-resources" class="hidden space-y-3 max-w-2xl">
+                        <h4 class="font-bold text-white text-sm mb-3">Downloadable Assets</h4>
+                        <div class="p-3 bg-slate-950 rounded-xl border border-slate-800 flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <i class="fa-solid fa-file-code text-indigo-400 text-lg"></i>
+                                <div>
+                                    <p class="text-xs font-semibold text-white">Starter-Project-Codebase.zip</p>
+                                    <p class="text-[10px] text-slate-400">Source code starter repo (2.4 MB)</p>
+                                </div>
+                            </div>
+                            <button onclick="downloadResource('Starter-Project-Codebase.zip')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-xs text-indigo-300 font-medium rounded-lg transition">Download</button>
+                        </div>
+                    </div>
+
+                    <!-- SUB-TAB 4: DISCUSSION FORUM -->
+                    <div id="subtab-content-discussion" class="hidden space-y-4 max-w-2xl">
+                        <h4 class="font-bold text-white text-sm">Community Questions</h4>
+                        <div class="space-y-3">
+                            <div class="p-3 bg-slate-950 rounded-xl border border-slate-800 text-xs space-y-1">
+                                <div class="flex justify-between text-slate-400">
+                                    <span class="font-semibold text-slate-200">David K.</span>
+                                    <span>2 hours ago</span>
+                                </div>
+                                <p class="text-slate-300">Why do Server Components default to zero client bundle size impact?</p>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Right Column: Interactive Playlist Accordion -->
+            <div class="bg-slate-900 border-l border-slate-800 flex flex-col h-full">
+                <div class="p-4 border-b border-slate-800 flex justify-between items-center">
+                    <h4 class="font-bold text-sm text-white">Course Syllabus</h4>
+                    <span class="text-xs text-indigo-400 font-mono">1 / 1 Lesson</span>
+                </div>
+
+                <div class="flex-1 overflow-y-auto custom-scrollbar divide-y divide-slate-800/60" id="syllabusAccordion">
+                    <!-- Syllabus Accordion Items inserted dynamically -->
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- VIEW 6: VIDEO UPLOAD MODAL -->
+    <div id="uploadModal" class="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-md hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-2xl w-full p-6 sm:p-8 space-y-6 shadow-2xl relative max-h-[90vh] overflow-y-auto custom-scrollbar">
+            
+            <!-- Close Button -->
+            <button onclick="closeUploadModal()" class="absolute top-5 right-5 text-slate-400 hover:text-slate-600 dark:hover:text-white transition">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+
+            <!-- Header Title -->
+            <div class="space-y-1">
+                <div class="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 font-semibold text-xs uppercase tracking-wider">
+                    <i class="fa-solid fa-cloud-arrow-up"></i> Instructor Studio
+                </div>
+                <h3 class="text-2xl font-extrabold text-slate-900 dark:text-white">Upload New Video Lesson</h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400">Publish custom video content to the course catalog for instant streaming.</p>
+            </div>
+
+            <!-- Upload Form -->
+            <form id="videoUploadForm" onsubmit="handleVideoUpload(event)" class="space-y-5">
+                
+                <!-- Video File Drag and Drop Zone -->
+                <div class="space-y-1.5">
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300">Video File (MP4, WebM)</label>
+                    <div id="videoDropZone" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleVideoDrop(event)"
+                        class="border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-indigo-500 dark:hover:border-indigo-400 rounded-2xl p-6 text-center bg-slate-50 dark:bg-slate-800/40 cursor-pointer transition flex flex-col items-center justify-center gap-2">
+                        <i class="fa-solid fa-file-video text-3xl text-indigo-500"></i>
+                        <p class="text-xs font-semibold text-slate-700 dark:text-slate-300">Drag & Drop your video file here, or <span class="text-indigo-600 dark:text-indigo-400">Browse</span></p>
+                        <p class="text-[10px] text-slate-400">Supports .mp4, .webm (Up to 500MB recommended)</p>
+                        <input type="file" id="videoFileInput" accept="video/mp4,video/webm" onchange="handleVideoFileSelect(this.files[0])" class="hidden">
+                    </div>
+                    <div id="videoFileSelectedName" class="hidden text-xs text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1.5 mt-2">
+                        <i class="fa-solid fa-circle-check"></i> <span id="selectedVideoFilename">video.mp4</span>
+                    </div>
+                </div>
+
+                <!-- Video Title & Category Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="space-y-1">
+                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300">Lesson Title *</label>
+                        <input type="text" id="uploadTitle" required placeholder="e.g. Master Vue 3 Reactivity in 15 Mins" 
+                            class="w-full px-3.5 py-2.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+
+                    <div class="space-y-1">
+                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300">Category *</label>
+                        <select id="uploadCategory" required class="w-full px-3.5 py-2.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="Web Development">Web Development</option>
+                            <option value="Data Science">Data Science</option>
+                            <option value="UI/UX Design">UI/UX Design</option>
+                            <option value="AI & Machine Learning">AI & Machine Learning</option>
+                            <option value="User Uploads">User Uploads</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Level, Instructor & Duration -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="space-y-1">
+                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300">Skill Level</label>
+                        <select id="uploadLevel" class="w-full px-3.5 py-2.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="Beginner">Beginner</option>
+                            <option value="Intermediate">Intermediate</option>
+                            <option value="Advanced">Advanced</option>
+                        </select>
+                    </div>
+
+                    <div class="space-y-1">
+                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300">Instructor Name</label>
+                        <input type="text" id="uploadInstructor" value="Alex Morgan" placeholder="Your Name" 
+                            class="w-full px-3.5 py-2.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+
+                    <div class="space-y-1">
+                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300">Duration (e.g. 12m)</label>
+                        <input type="text" id="uploadDuration" placeholder="15m" value="12m" 
+                            class="w-full px-3.5 py-2.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                </div>
+
+                <!-- Description -->
+                <div class="space-y-1">
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300">Course Description</label>
+                    <textarea id="uploadDescription" rows="3" placeholder="Brief overview of what students will learn in this video lesson..." 
+                        class="w-full px-3.5 py-2.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                </div>
+
+                <!-- Thumbnail File Picker -->
+                <div class="space-y-1">
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300">Thumbnail Image (Optional)</label>
+                    <input type="file" id="thumbnailFileInput" accept="image/*" onchange="handleThumbnailSelect(this.files[0])"
+                        class="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-600 dark:file:bg-indigo-950 dark:file:text-indigo-300 hover:file:bg-indigo-100 cursor-pointer">
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="pt-3 flex items-center justify-end gap-3 border-t border-slate-200 dark:border-slate-800">
+                    <button type="button" onclick="closeUploadModal()" class="px-5 py-2.5 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">Cancel</button>
+                    <button type="submit" class="px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold text-xs rounded-xl hover:from-indigo-700 hover:to-violet-700 shadow-md shadow-indigo-500/20 transition">Publish Video Lesson</button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT APPLICATION LOGIC -->
+    <script>
+        // GLOBAL STATE & MOCK DATA
+        const state = {
+            activeTab: 'dashboard',
+            searchQuery: '',
+            selectedCategory: 'All',
+            selectedLevel: 'All',
+            sortBy: 'popular',
+            savedCourseIds: new Set([2, 4]),
+            dailyGoalMinutes: 60,
+            todayMinutesLearned: 45,
+            activeCourseId: 1,
+            activeLessonId: 'lesson-3',
+            quizScore: 0,
+            uploadedVideoFile: null,
+            uploadedThumbnailFile: null,
+            courses: [
+                {
+                    id: 1,
+                    title: "Full-Stack Modern React & Next.js",
+                    category: "Web Development",
+                    instructor: "Dr. Sarah Lin",
+                    rating: 4.9,
+                    reviewsCount: 1240,
+                    duration: "18h 45m",
+                    level: "Intermediate",
+                    enrolled: true,
+                    progressPct: 68,
+                    thumbnail: "https://images.unsplash.com/photo-1633356122544-f134324a6cee?auto=format&fit=crop&q=80&w=600",
+                    videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+                    description: "Master Modern React 18, Server Components, Next.js App Router, and Tailwind CSS through real projects.",
+                    modules: [
+                        {
+                            title: "Module 1: Foundations & React 18 Core",
+                            lessons: [
+                                { id: "lesson-1", title: "1. Virtual DOM & JSX Mechanics", duration: "12m", completed: true, videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4" },
+                                { id: "lesson-2", title: "2. Custom Hooks & State Patterns", duration: "18m", completed: true, videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4" }
+                            ]
+                        },
+                        {
+                            title: "Module 2: Server Components Architecture",
+                            lessons: [
+                                { id: "lesson-3", title: "3. Server Components vs Client Components", duration: "15m", completed: false, videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4" },
+                                { id: "lesson-4", title: "4. Server Actions & Mutations", duration: "22m", completed: false, videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4" }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    id: 2,
+                    title: "Data Science & Machine Learning Bootcamp",
+                    category: "Data Science",
+                    instructor: "Prof. Michael Chang",
+                    rating: 4.8,
+                    reviewsCount: 890,
+                    duration: "24h 10m",
+                    level: "Beginner",
+                    enrolled: true,
+                    progressPct: 35,
+                    thumbnail: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=600",
+                    videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+                    description: "Learn Python, Pandas, NumPy, Scikit-Learn, and Neural Networks with practical datasets.",
+                    modules: []
+                },
+                {
+                    id: 3,
+                    title: "UI/UX Design Systems & Figma Mastery",
+                    category: "UI/UX Design",
+                    instructor: "Elena Rostova",
+                    rating: 4.9,
+                    reviewsCount: 2100,
+                    duration: "12h 30m",
+                    level: "Beginner",
+                    enrolled: true,
+                    progressPct: 90,
+                    thumbnail: "https://images.unsplash.com/photo-1581291518633-83b4ebd1d83e?auto=format&fit=crop&q=80&w=600",
+                    videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
+                    description: "Build scalable design systems, auto-layouts, variables, and interactive high-fidelity prototypes.",
+                    modules: []
+                },
+                {
+                    id: 4,
+                    title: "AI Engineer: Building LLM Apps & RAG",
+                    category: "AI & Machine Learning",
+                    instructor: "Alex Rivera",
+                    rating: 4.95,
+                    reviewsCount: 310,
+                    duration: "16h 20m",
+                    level: "Advanced",
+                    enrolled: false,
+                    progressPct: 0,
+                    thumbnail: "https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&q=80&w=600",
+                    videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
+                    description: "Harness OpenAI APIs, LangChain, Vector Databases, and RAG architectures for enterprise AI.",
+                    modules: []
+                }
+            ],
+            quizData: [
+                {
+                    id: "q1",
+                    question: "What is the primary performance benefit of React Server Components (RSC)?",
+                    options: [
+                        "They render entirely in the client browser engine.",
+                        "They do not ship JavaScript code for server-only dependencies to the client bundle.",
+                        "They automatically convert code into WebAssembly binaries.",
+                        "They eliminate the need for any CSS styling."
+                    ],
+                    correctIndex: 1,
+                    explanation: "RSCs execute solely on the server, meaning their dependencies are not included in the bundle sent to the user's browser, significantly reducing download size."
+                },
+                {
+                    id: "q2",
+                    question: "Which directive marks a component as interactive on the client in Next.js?",
+                    options: [
+                        "'use server'",
+                        "'use client'",
+                        "'use browser'",
+                        "'use interactive'"
+                    ],
+                    correctIndex: 1,
+                    explanation: "The 'use client' directive declares a boundary between a Server and Client Component module graph."
+                }
+            ]
+        };
+
+        window.addEventListener('DOMContentLoaded', () => {
+            loadUploadedCoursesFromStorage();
+            renderDashboard();
+            renderCatalog();
+            updateGoalDisplay();
+            loadSavedNotes();
+
+            // Mobile menu toggle
+            document.getElementById('mobileMenuBtn')?.addEventListener('click', () => {
+                alert("EduPulse Mobile Navigation Menu triggered. Resize screen or click top tabs to navigate.");
+            });
+
+            // Video drag and drop click trigger
+            const videoDropZone = document.getElementById('videoDropZone');
+            if(videoDropZone) {
+                videoDropZone.addEventListener('click', () => {
+                    document.getElementById('videoFileInput').click();
+                });
+            }
+        });
+
+        // LOCAL STORAGE LOAD FOR USER UPLOADS
+        function loadUploadedCoursesFromStorage() {
+            try {
+                const stored = localStorage.getItem('edupulse_custom_courses');
+                if (stored) {
+                    const parsed = JSON.parse(stored);
+                    if (Array.isArray(parsed) && parsed.length > 0) {
+                        state.courses = [...parsed, ...state.courses];
+                    }
+                }
+            } catch (e) {
+                console.error("Failed to load custom courses from localStorage:", e);
+            }
+        }
+
+        function saveUploadedCoursesToStorage(newCourse) {
+            try {
+                const existingStored = JSON.parse(localStorage.getItem('edupulse_custom_courses') || '[]');
+                // Exclude raw video blob URL from local storage string, store placeholder metadata
+                const courseToStore = { ...newCourse, videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4" };
+                existingStored.unshift(courseToStore);
+                localStorage.setItem('edupulse_custom_courses', JSON.stringify(existingStored));
+            } catch (e) {
+                console.error("Failed to save custom course:", e);
+            }
+        }
+
+        // UPLOAD MODAL & DRAG/DROP LOGIC
+        function openUploadModal() {
+            document.getElementById('uploadModal').classList.remove('hidden');
+        }
+
+        function closeUploadModal() {
+            document.getElementById('uploadModal').classList.add('hidden');
+            document.getElementById('videoUploadForm').reset();
+            state.uploadedVideoFile = null;
+            state.uploadedThumbnailFile = null;
+            document.getElementById('videoFileSelectedName').classList.add('hidden');
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            document.getElementById('videoDropZone').classList.add('border-indigo-500', 'bg-indigo-50', 'dark:bg-indigo-950/40');
+        }
+
+        function handleDragLeave(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            document.getElementById('videoDropZone').classList.remove('border-indigo-500', 'bg-indigo-50', 'dark:bg-indigo-950/40');
+        }
+
+        function handleVideoDrop(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            document.getElementById('videoDropZone').classList.remove('border-indigo-500', 'bg-indigo-50', 'dark:bg-indigo-950/40');
+            if(e.dataTransfer.files && e.dataTransfer.files[0]) {
+                handleVideoFileSelect(e.dataTransfer.files[0]);
+            }
+        }
+
+        function handleVideoFileSelect(file) {
+            if(!file) return;
+            state.uploadedVideoFile = file;
+            document.getElementById('selectedVideoFilename').innerText = `${file.name} (${(file.size / (1024 * 1024)).toFixed(1)} MB)`;
+            document.getElementById('videoFileSelectedName').classList.remove('hidden');
+        }
+
+        function handleThumbnailSelect(file) {
+            if(file) {
+                state.uploadedThumbnailFile = file;
+            }
+        }
+
+        function handleVideoUpload(e) {
+            e.preventDefault();
+
+            const title = document.getElementById('uploadTitle').value;
+            const category = document.getElementById('uploadCategory').value;
+            const level = document.getElementById('uploadLevel').value;
+            const instructor = document.getElementById('uploadInstructor').value || "Alex Morgan";
+            const duration = document.getElementById('uploadDuration').value || "10m";
+            const description = document.getElementById('uploadDescription').value || "User uploaded lesson video.";
+
+            let videoBlobUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4";
+            if (state.uploadedVideoFile) {
+                videoBlobUrl = URL.createObjectURL(state.uploadedVideoFile);
+            }
+
+            let thumbnailBlobUrl = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=600";
+            if (state.uploadedThumbnailFile) {
+                thumbnailBlobUrl = URL.createObjectURL(state.uploadedThumbnailFile);
+            }
+
+            const newCourse = {
+                id: Date.now(),
+                title: title,
+                category: category,
+                instructor: instructor,
+                rating: 5.0,
+                reviewsCount: 1,
+                duration: duration,
+                level: level,
+                enrolled: true,
+                progressPct: 0,
+                thumbnail: thumbnailBlobUrl,
+                videoUrl: videoBlobUrl,
+                description: description,
+                isUserUpload: true,
+                modules: [
+                    {
+                        title: "Module 1: User Uploaded Lesson",
+                        lessons: [
+                            { id: `lesson-${Date.now()}`, title: title, duration: duration, completed: false, videoUrl: videoBlobUrl }
+                        ]
+                    }
+                ]
+            };
+
+            // Prepend to courses list
+            state.courses.unshift(newCourse);
+            saveUploadedCoursesToStorage(newCourse);
+
+            closeUploadModal();
+            renderCatalog();
+            renderDashboard();
+
+            // Switch to catalog view and highlight
+            switchTab('catalog');
+            alert(`🎉 Success! Video lesson "${title}" uploaded and published to the catalog.`);
+        }
+
+        // NAVIGATION TABS SWITCHER
+        function switchTab(tabId) {
+            state.activeTab = tabId;
+            document.querySelectorAll('#viewTabs button').forEach(btn => {
+                btn.className = "nav-tab px-4 py-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50 transition";
+            });
+            const activeBtn = document.getElementById(`tab-${tabId}`);
+            if(activeBtn) {
+                activeBtn.className = "nav-tab px-4 py-2 rounded-xl text-indigo-600 bg-indigo-50 dark:bg-indigo-950/60 dark:text-indigo-400 font-semibold transition";
+            }
+
+            document.getElementById('view-dashboard').classList.add('hidden');
+            document.getElementById('view-catalog').classList.add('hidden');
+            document.getElementById('view-bookmarks').classList.add('hidden');
+            document.getElementById('view-planner').classList.add('hidden');
+
+            document.getElementById(`view-${tabId}`)?.classList.remove('hidden');
+
+            if(tabId === 'bookmarks') renderBookmarks();
+        }
+
+        // DARK MODE TOGGLE
+        function toggleTheme() {
+            const html = document.documentElement;
+            const themeIcon = document.getElementById('themeIcon');
+            if (html.classList.contains('dark')) {
+                html.classList.remove('dark');
+                themeIcon.className = "fa-solid fa-moon";
+            } else {
+                html.classList.add('dark');
+                themeIcon.className = "fa-solid fa-sun text-amber-400";
+            }
+        }
+
+        // NOTIFICATIONS DROPDOWN
+        function toggleNotifications() {
+            const panel = document.getElementById('notificationsPanel');
+            panel.classList.toggle('hidden');
+        }
+
+        // DASHBOARD RENDERER
+        function renderDashboard() {
+            const container = document.getElementById('inProgressCoursesContainer');
+            const inProgress = state.courses.filter(c => c.enrolled);
+
+            document.getElementById('statEnrolled').innerText = inProgress.length;
+
+            container.innerHTML = inProgress.map(course => `
+                <div class="glass-card rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition flex flex-col justify-between">
+                    <div>
+                        <div class="relative h-36 overflow-hidden">
+                            <img src="${course.thumbnail}" alt="${course.title}" class="w-full h-full object-cover">
+                            <span class="absolute top-2 right-2 bg-slate-900/80 text-white text-[10px] font-semibold px-2 py-1 rounded-md backdrop-blur-sm">${course.category}</span>
+                            ${course.isUserUpload ? `<span class="absolute top-2 left-2 bg-indigo-600 text-white text-[9px] font-bold px-2 py-0.5 rounded-md shadow-sm"><i class="fa-solid fa-upload mr-1"></i> User Upload</span>` : ''}
+                        </div>
+                        <div class="p-4 space-y-2">
+                            <div class="flex items-center gap-1 text-xs text-amber-500 font-semibold">
+                                <i class="fa-solid fa-star text-[10px]"></i> ${course.rating} <span class="text-slate-400">(${course.reviewsCount})</span>
+                            </div>
+                            <h4 class="font-bold text-sm leading-snug line-clamp-1">${course.title}</h4>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">${course.instructor}</p>
+                        </div>
+                    </div>
+                    <div class="p-4 pt-0 space-y-3">
+                        <div>
+                            <div class="flex justify-between text-[11px] font-semibold mb-1">
+                                <span>Progress</span>
+                                <span>${course.progressPct}%</span>
+                            </div>
+                            <div class="w-full bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden">
+                                <div class="bg-indigo-600 h-1.5 rounded-full" style="width: ${course.progressPct}%"></div>
+                            </div>
+                        </div>
+                        <button onclick="launchLessonPlayer(${course.id}, '${course.modules && course.modules[0] ? course.modules[0].lessons[0]?.id : 'lesson-1'}')" class="w-full py-2 bg-slate-100 dark:bg-slate-700/60 hover:bg-indigo-600 hover:text-white text-indigo-600 dark:text-indigo-400 font-semibold rounded-xl text-xs transition flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-play text-[10px]"></i> Watch Video Lesson
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // COURSE CATALOG RENDERER
+        function renderCatalog() {
+            const grid = document.getElementById('catalogGrid');
+            let filtered = state.courses.filter(c => {
+                const matchCat = state.selectedCategory === 'All' || c.category === state.selectedCategory;
+                const matchLevel = state.selectedLevel === 'All' || c.level === state.selectedLevel;
+                const matchSearch = c.title.toLowerCase().includes(state.searchQuery) || c.instructor.toLowerCase().includes(state.searchQuery);
+                return matchCat && matchLevel && matchSearch;
+            });
+
+            if(filtered.length === 0) {
+                grid.innerHTML = `<div class="col-span-full text-center py-12 text-slate-400 text-sm">No courses matching your criteria. Be the first to upload a video lesson!</div>`;
+                return;
+            }
+
+            grid.innerHTML = filtered.map(course => {
+                const isSaved = state.savedCourseIds.has(course.id);
+                return `
+                <div class="glass-card rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition flex flex-col justify-between group">
+                    <div>
+                        <div class="relative h-44 overflow-hidden">
+                            <img src="${course.thumbnail}" alt="${course.title}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                            <button onclick="toggleBookmark(event, ${course.id})" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-md flex items-center justify-center text-slate-700 dark:text-slate-200 hover:text-rose-500 transition shadow-sm">
+                                <i class="${isSaved ? 'fa-solid fa-bookmark text-rose-500' : 'fa-regular fa-bookmark'} text-xs"></i>
+                            </button>
+                            <span class="absolute bottom-3 left-3 bg-slate-900/80 text-white text-[10px] font-semibold px-2.5 py-1 rounded-lg backdrop-blur-sm">${course.level}</span>
+                            ${course.isUserUpload ? `<span class="absolute top-3 left-3 bg-indigo-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-lg shadow-sm"><i class="fa-solid fa-cloud-arrow-up mr-1"></i> User Upload</span>` : ''}
+                        </div>
+                        <div class="p-5 space-y-2">
+                            <div class="flex items-center justify-between text-xs">
+                                <span class="text-indigo-600 dark:text-indigo-400 font-semibold">${course.category}</span>
+                                <span class="text-amber-500 font-bold"><i class="fa-solid fa-star text-[10px]"></i> ${course.rating}</span>
+                            </div>
+                            <h3 onclick="launchLessonPlayer(${course.id}, 'lesson-1')" class="font-bold text-base leading-snug hover:text-indigo-600 dark:hover:text-indigo-400 transition cursor-pointer">${course.title}</h3>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 line-clamp-2">${course.description}</p>
+                        </div>
+                    </div>
+                    <div class="p-5 pt-0 border-t border-slate-100 dark:border-slate-800/60 mt-3 flex items-center justify-between">
+                        <span class="text-xs text-slate-400"><i class="fa-regular fa-clock mr-1"></i> ${course.duration}</span>
+                        ${course.enrolled ? 
+                            `<button onclick="launchLessonPlayer(${course.id}, 'lesson-1')" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl text-xs transition shadow-md shadow-indigo-500/20"><i class="fa-solid fa-play mr-1"></i> Watch Video</button>` :
+                            `<button onclick="enrollCourse(${course.id})" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl text-xs transition shadow-md shadow-indigo-500/20">Enroll Now</button>`
+                        }
+                    </div>
+                </div>
+            `}).join('');
+        }
+
+        // BOOKMARKS RENDERER
+        function renderBookmarks() {
+            const grid = document.getElementById('bookmarksGrid');
+            const savedCourses = state.courses.filter(c => state.savedCourseIds.has(c.id));
+            
+            document.getElementById('savedCount').innerText = state.savedCourseIds.size;
+
+            if(savedCourses.length === 0) {
+                grid.innerHTML = `<div class="col-span-full text-center py-12 text-slate-400 text-sm">No saved courses yet. Explore the catalog to bookmark your favorite courses!</div>`;
+                return;
+            }
+
+            grid.innerHTML = savedCourses.map(course => `
+                <div class="glass-card rounded-2xl overflow-hidden shadow-sm p-4 flex gap-4 items-center">
+                    <img src="${course.thumbnail}" class="w-24 h-24 rounded-xl object-cover">
+                    <div class="flex-1 space-y-1">
+                        <span class="text-[10px] font-semibold text-indigo-500">${course.category}</span>
+                        <h4 class="font-bold text-sm line-clamp-1">${course.title}</h4>
+                        <p class="text-xs text-slate-400">${course.instructor}</p>
+                        <button onclick="toggleBookmark(event, ${course.id})" class="text-xs text-rose-500 hover:underline pt-1 block"><i class="fa-solid fa-trash mr-1"></i> Remove</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // SEARCH & FILTERS
+        function handleSearch(val) {
+            state.searchQuery = val.toLowerCase();
+            if(state.activeTab !== 'catalog') switchTab('catalog');
+            renderCatalog();
+        }
+
+        function filterCategory(cat) {
+            state.selectedCategory = cat;
+            document.querySelectorAll('.cat-filter-btn').forEach(btn => {
+                if(btn.innerText.includes(cat) || (cat==='All' && btn.innerText.includes('All Topics'))) {
+                    btn.className = "cat-filter-btn px-3.5 py-2 rounded-xl bg-indigo-600 text-white font-semibold shadow-sm transition";
+                } else {
+                    btn.className = "cat-filter-btn px-3.5 py-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition";
+                }
+            });
+            renderCatalog();
+        }
+
+        function applyFilters() {
+            state.selectedLevel = document.getElementById('levelFilter').value;
+            state.sortBy = document.getElementById('sortByFilter').value;
+            renderCatalog();
+        }
+
+        function toggleBookmark(e, courseId) {
+            e.stopPropagation();
+            if(state.savedCourseIds.has(courseId)) {
+                state.savedCourseIds.delete(courseId);
+            } else {
+                state.savedCourseIds.add(courseId);
+            }
+            document.getElementById('savedCount').innerText = state.savedCourseIds.size;
+            renderCatalog();
+            if(state.activeTab === 'bookmarks') renderBookmarks();
+        }
+
+        function enrollCourse(courseId) {
+            const course = state.courses.find(c => c.id === courseId);
+            if(course) {
+                course.enrolled = true;
+                course.progressPct = 5;
+                renderCatalog();
+                renderDashboard();
+                alert(`Successfully enrolled in "${course.title}"! You can now access all video modules.`);
+            }
+        }
+
+        // STUDY PLANNER GOAL LOGIC
+        function updateGoalTarget(val) {
+            state.dailyGoalMinutes = parseInt(val);
+            document.getElementById('targetMinutesLabel').innerText = `${val} Minutes`;
+            updateGoalDisplay();
+        }
+
+        function addStudyMinutes(mins) {
+            state.todayMinutesLearned += mins;
+            updateGoalDisplay();
+        }
+
+        function resetTodayGoal() {
+            state.todayMinutesLearned = 0;
+            updateGoalDisplay();
+        }
+
+        function updateGoalDisplay() {
+            const pct = Math.min(100, Math.round((state.todayMinutesLearned / state.dailyGoalMinutes) * 100));
+            document.getElementById('goalMinutesDisplay').innerText = state.todayMinutesLearned;
+            document.getElementById('targetMinutesDisplay').innerText = state.dailyGoalMinutes;
+            document.getElementById('plannerTodayProgress').innerText = `${state.todayMinutesLearned} / ${state.dailyGoalMinutes} Mins`;
+            
+            // Update SVG dash offset
+            const strokeVal = `${pct}, 100`;
+            document.getElementById('goalProgressCircle').setAttribute('stroke-dasharray', strokeVal);
+
+            // Update friday bar height
+            const fridayBar = document.getElementById('fridayBar');
+            if(fridayBar) {
+                fridayBar.innerText = `${state.todayMinutesLearned}m`;
+            }
+        }
+
+        // DYNAMIC HTML5 VIDEO PLAYER MODAL LOGIC
+        function launchLessonPlayer(courseId, lessonId) {
+            const course = state.courses.find(c => c.id === courseId) || state.courses[0];
+            state.activeCourseId = course.id;
+            state.activeLessonId = lessonId || 'lesson-1';
+
+            document.getElementById('playerCourseTitle').innerText = course.title;
+            document.getElementById('playerLessonTitle').innerText = course.title;
+
+            const videoPlayer = document.getElementById('mainVideoPlayer');
+            const targetVideoUrl = course.videoUrl || "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4";
+
+            // Update Video Source & Poster
+            videoPlayer.pause();
+            videoPlayer.src = targetVideoUrl;
+            if (course.thumbnail) {
+                videoPlayer.poster = course.thumbnail;
+            }
+            videoPlayer.load();
+
+            renderSyllabusAccordion(course);
+            renderQuiz();
+
+            document.getElementById('lessonPlayerModal').classList.remove('hidden');
+        }
+
+        function closeLessonPlayer() {
+            const videoPlayer = document.getElementById('mainVideoPlayer');
+            if(videoPlayer) videoPlayer.pause();
+            document.getElementById('lessonPlayerModal').classList.add('hidden');
+        }
+
+        function renderSyllabusAccordion(course) {
+            const accordion = document.getElementById('syllabusAccordion');
+            if(!course.modules || course.modules.length === 0) {
+                accordion.innerHTML = `
+                    <div class="p-4 space-y-2">
+                        <p class="text-xs font-bold text-slate-300">Module 1: Main Video Lesson</p>
+                        <div class="p-2.5 rounded-xl bg-indigo-600 text-white font-semibold text-xs flex justify-between items-center cursor-pointer">
+                            <span><i class="fa-solid fa-play mr-2 text-[10px]"></i> ${course.title}</span>
+                            <span class="text-[10px] opacity-70">${course.duration}</span>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            accordion.innerHTML = course.modules.map((mod, idx) => `
+                <div class="p-3">
+                    <p class="text-xs font-bold text-slate-300 mb-2">${mod.title}</p>
+                    <div class="space-y-1">
+                        ${mod.lessons.map(les => `
+                            <div onclick="selectLesson('${les.id}', '${les.title}', '${les.videoUrl}')" class="p-2.5 rounded-xl flex items-center justify-between text-xs cursor-pointer ${les.id === state.activeLessonId ? 'bg-indigo-600 text-white font-semibold' : 'hover:bg-slate-800 text-slate-300'}">
+                                <div class="flex items-center gap-2">
+                                    <i class="${les.completed ? 'fa-solid fa-circle-check text-emerald-400' : 'fa-regular fa-circle text-slate-500'}"></i>
+                                    <span>${les.title}</span>
+                                </div>
+                                <span class="text-[10px] opacity-70">${les.duration}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function selectLesson(id, title, videoUrl) {
+            state.activeLessonId = id;
+            document.getElementById('playerLessonTitle').innerText = title;
+
+            const videoPlayer = document.getElementById('mainVideoPlayer');
+            if(videoUrl && videoUrl !== 'undefined') {
+                videoPlayer.pause();
+                videoPlayer.src = videoUrl;
+                videoPlayer.load();
+                videoPlayer.play();
+            }
+
+            renderSyllabusAccordion(state.courses.find(c => c.id === state.activeCourseId));
+        }
+
+        function switchLessonSubTab(tab) {
+            document.querySelectorAll('.subtab-btn').forEach(btn => {
+                btn.className = "subtab-btn py-3 hover:text-white text-slate-400";
+            });
+            document.getElementById(`subtab-${tab}`).className = "subtab-btn py-3 text-indigo-400 border-b-2 border-indigo-500 font-semibold";
+
+            ['quiz', 'notes', 'resources', 'discussion'].forEach(t => {
+                document.getElementById(`subtab-content-${t}`).classList.add('hidden');
+            });
+            document.getElementById(`subtab-content-${tab}`).classList.remove('hidden');
+        }
+
+        // QUIZ ENGINE LOGIC
+        function renderQuiz() {
+            const container = document.getElementById('quizContainer');
+            container.innerHTML = state.quizData.map((q, qIdx) => `
+                <div class="p-4 bg-slate-950 rounded-2xl border border-slate-800 space-y-3">
+                    <p class="text-xs font-bold text-slate-100">${qIdx + 1}. ${q.question}</p>
+                    <div class="space-y-2">
+                        ${q.options.map((opt, optIdx) => `
+                            <button onclick="checkAnswer('${q.id}', ${optIdx})" id="opt-${q.id}-${optIdx}" class="w-full text-left p-3 rounded-xl bg-slate-900 border border-slate-800 hover:border-indigo-500/50 text-xs text-slate-300 transition">
+                                ${opt}
+                            </button>
+                        `).join('')}
+                    </div>
+                    <div id="explanation-${q.id}" class="hidden p-3 bg-indigo-950/50 border border-indigo-800/60 rounded-xl text-[11px] text-indigo-200"></div>
+                </div>
+            `).join('');
+        }
+
+        function checkAnswer(qId, selectedIdx) {
+            const q = state.quizData.find(item => item.id === qId);
+            const expBox = document.getElementById(`explanation-${qId}`);
+
+            state.quizData.forEach((_, idx) => {
+                const btn = document.getElementById(`opt-${qId}-${idx}`);
+                btn.disabled = true;
+                if(idx === q.correctIndex) {
+                    btn.className = "w-full text-left p-3 rounded-xl bg-emerald-950/60 border border-emerald-500 text-xs text-emerald-300 font-semibold";
+                } else if(idx === selectedIdx && selectedIdx !== q.correctIndex) {
+                    btn.className = "w-full text-left p-3 rounded-xl bg-rose-950/60 border border-rose-500 text-xs text-rose-300 font-semibold";
+                }
+            });
+
+            if(selectedIdx === q.correctIndex) {
+                state.quizScore += 1;
+                document.getElementById('quizScoreText').innerText = `${state.quizScore}/${state.quizData.length}`;
+            }
+
+            expBox.innerHTML = `<strong>Explanation:</strong> ${q.explanation}`;
+            expBox.classList.remove('hidden');
+        }
+
+        // LOCAL STORAGE PERSISTENT NOTEPAD
+        function saveNotes() {
+            const val = document.getElementById('lessonNotepad').value;
+            localStorage.setItem(`edupulse_notes_${state.activeCourseId}`, val);
+            const ind = document.getElementById('notesSavedIndicator');
+            ind.classList.remove('opacity-0');
+            setTimeout(() => ind.classList.add('opacity-0'), 2000);
+        }
+
+        function loadSavedNotes() {
+            const saved = localStorage.getItem(`edupulse_notes_${state.activeCourseId}`);
+            if(saved) document.getElementById('lessonNotepad').value = saved;
+        }
+
+        function downloadResource(filename) {
+            alert(`Downloading ${filename}... File saved to your downloads folder.`);
+        }
+    </script>
+</body>
+</html>
